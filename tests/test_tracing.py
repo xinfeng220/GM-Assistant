@@ -52,3 +52,16 @@ def test_traced_decorator_records_node():
     run = r.get_last_run()
     assert run["nodes"][0]["node"] == "fetch_node"
     assert run["nodes"][0]["status"] == "ok"
+
+
+def test_tracing_disabled_gates_recording(monkeypatch):
+    from src.core.config_manager import config
+    from src.core.tracing import TraceRecorder
+
+    monkeypatch.setattr(config, "TRACING_ENABLED", False)
+    r = TraceRecorder()
+    r.begin_run("email.refresh")
+    r.record_node("fetch_node", "ok", 1.0)
+    r.end_run()
+    assert r.get_last_run() is None
+    assert r.recent_runs(5) == []

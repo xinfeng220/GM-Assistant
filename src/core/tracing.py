@@ -3,11 +3,14 @@
 
 进程内结构化缓冲，供可视化页展示（对应需求文档 6.3 审计日志）。
 begin_run()/end_run() 之间为一次「当前运行」，record_* 写入当前运行；
-未 begin_run 时 record_* 为 no-op，保证调用方无需判空。
+未 begin_run 时 record_* 为 no-op，保证调用方无需判空；
+settings.yaml 中 tracing.enabled: false 时 begin_run 为 no-op，不产生任何轨迹。
 """
 from collections import deque
 from functools import wraps
 from time import perf_counter
+
+from src.core.config_manager import config
 
 
 class TraceRecorder:
@@ -18,6 +21,8 @@ class TraceRecorder:
 
     # ---------- 运行生命周期 ----------
     def begin_run(self, route: str) -> None:
+        if not config.TRACING_ENABLED:
+            return
         self._current = {
             "route": route,
             "nodes": [],
@@ -63,7 +68,7 @@ class TraceRecorder:
 
 
 # 全局单例
-tracer = TraceRecorder()
+tracer = TraceRecorder(recent_maxlen=config.TRACING_RECENT_MAXLEN)
 
 
 def traced(*, target: "TraceRecorder | None" = None):
