@@ -10,6 +10,7 @@ import streamlit as st
 
 from src.core.logger import logger
 from src.core.config_manager import config
+from src.core.tracing import tracer
 
 # 分组展示顺序与图标
 _URGENCY_ORDER = ["紧急", "重要", "普通", "可忽略"]
@@ -61,6 +62,7 @@ def _refresh() -> None:
     from src.core.graph import agent
 
     with st.spinner("正在拉取并分类邮件..."):
+        tracer.begin_run("email.refresh")
         try:
             result = agent.invoke(
                 {"route": "email.refresh"},
@@ -76,6 +78,8 @@ def _refresh() -> None:
         except Exception as e:
             logger.error("email.ui_page", f"刷新失败: {e}")
             st.error(f"刷新失败：{e}")
+        finally:
+            tracer.end_run()
     st.rerun()
 
 

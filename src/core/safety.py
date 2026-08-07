@@ -8,6 +8,7 @@
 """
 from src.core.config_manager import config
 from src.core.tool_registry import registry, TOOL_READ, TOOL_WRITE_EXTERNAL, TOOL_WRITE_INTERNAL
+from src.core.tracing import tracer
 
 # 权限判定结果
 PERMIT_ALLOWED = "allowed"
@@ -72,10 +73,19 @@ def safe_call(tool_name: str, **kwargs: Any) -> Any:
     """
     definition = registry.get_tool(tool_name)
     if definition is None:
+        tracer.record_tool(tool_name, "unknown")
         raise PermissionDeniedError(f"未注册工具: {tool_name}")
     verdict = gateway.check_permission(tool_name)
     if verdict == PERMIT_DENIED:
+        tracer.record_tool(tool_name, "denied")
         raise PermissionDeniedError(f"工具被安全网关拒绝: {tool_name}")
     if verdict == PERMIT_NEEDS_CONFIRM:
+        tracer.record_tool(tool_name, "needs_confirm")
         raise NeedsConfirmError(f"工具需要用户确认: {tool_name}")
-    return definition.handler(**kwargs)
+    try:
+        result = definition.handler(**kwargs)
+    except Exception:
+        tracer.record_tool(tool_name, "error")
+        raise
+    tracer.record_tool(tool_name, "ok")
+    return result

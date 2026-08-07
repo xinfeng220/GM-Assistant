@@ -8,7 +8,7 @@ _PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_email_page_refresh_renders_groups(mock_env):
-    at = AppTest.from_file(_PROJECT_ROOT / "pages/01_邮件处理.py", default_timeout=30)
+    at = AppTest.from_file(_PROJECT_ROOT / "pages/02_邮件处理.py", default_timeout=30)
     at.run()
     assert not at.exception
     at.button[0].click().run()

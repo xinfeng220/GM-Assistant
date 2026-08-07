@@ -5,12 +5,12 @@
 """
 import streamlit as st
 
-from src.core.graph import agent
 from src.core.logger import logger
 from src.core.orchestrator import orchestrator
 from src.core.safety import gateway
 from src.core.tool_registry import registry
 from src.core.config_manager import config
+from src.core.tracing import tracer
 
 st.set_page_config(page_title="GM-Assistant Agent 平台", page_icon="🤖", layout="wide")
 
@@ -26,12 +26,8 @@ c1, c2, c3, c4 = st.columns(4)
 c1.metric("技能模块", len(skills))
 c2.metric("工具注册", tool_count)
 c3.metric("安全模式", gateway.mode())
-try:
-    _snap = agent.get_state({"configurable": {"thread_id": "ui"}})
-    _msg_count = len(_snap.values.get("messages") or []) if _snap else 0
-except Exception:
-    _msg_count = 0
-c4.metric("会话消息", _msg_count)
+run = tracer.get_last_run()
+c4.metric("最近执行", run["route"] if run else "—")
 
 # ---------- 技能列表 ----------
 st.subheader("🧩 已加载技能")

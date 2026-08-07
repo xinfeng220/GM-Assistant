@@ -9,8 +9,10 @@ from langgraph.graph import END, StateGraph
 from src.core.logger import logger
 from src.core.safety import safe_call
 from src.core.state import AgentState
+from src.core.tracing import traced
 
 
+@traced()
 def fetch_node(state: AgentState) -> dict:
     try:
         emails = safe_call("fetch_emails")
@@ -21,6 +23,7 @@ def fetch_node(state: AgentState) -> dict:
         return {"emails": [], "errors": [f"拉取失败: {e}"]}
 
 
+@traced()
 def classify_node(state: AgentState) -> dict:
     emails = state.get("emails") or []
     try:

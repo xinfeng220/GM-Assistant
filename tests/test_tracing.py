@@ -35,3 +35,20 @@ def test_recent_runs_bounded():
         r.end_run()
     assert len(r.recent_runs(10)) == 2
     assert r.recent_runs(1)[0]["route"] == "r2"
+
+
+def test_traced_decorator_records_node():
+    from src.core.tracing import TraceRecorder, traced
+
+    r = TraceRecorder()
+    r.begin_run("email.refresh")
+
+    @traced(target=r)
+    def fetch_node(state):
+        return {"emails": []}
+
+    fetch_node({})
+    r.end_run()
+    run = r.get_last_run()
+    assert run["nodes"][0]["node"] == "fetch_node"
+    assert run["nodes"][0]["status"] == "ok"

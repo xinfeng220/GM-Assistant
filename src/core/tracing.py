@@ -6,6 +6,7 @@ begin_run()/end_run() 之间为一次「当前运行」，record_* 写入当前�
 未 begin_run 时 record_* 为 no-op，保证调用方无需判空。
 """
 from collections import deque
+from functools import wraps
 from time import perf_counter
 
 
@@ -63,3 +64,20 @@ class TraceRecorder:
 
 # 全局单例
 tracer = TraceRecorder()
+
+
+def traced(*, target: "TraceRecorder | None" = None):
+    """包裹图节点：计时并记录执行轨迹。缺省记录到全局 tracer。"""
+    def decorator(fn):
+        @wraps(fn)
+        def wrapper(state):
+            rec = target if target is not None else tracer
+            start = perf_counter()
+            result = fn(state)
+            duration_ms = (perf_counter() - start) * 1000
+            if rec is not None:
+                status = "error" if (result or {}).get("errors") else "ok"
+                rec.record_node(fn.__name__, status, duration_ms)
+            return result
+        return wrapper
+    return decorator
