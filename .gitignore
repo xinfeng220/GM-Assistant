@@ -14,3 +14,6 @@ Thumbs.db
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Claude Code worktrees（隔离工作区）
+.claude/worktrees/
