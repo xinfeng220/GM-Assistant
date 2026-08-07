@@ -13,6 +13,7 @@
 GM-Assistant/
 ├── agent_core/                  # 核心框架（与具体技能解耦）
 │   ├── orchestrator.py          # 技能编排器：扫描 skills/，动态加载 skill_manifest.py
+│   ├── state.py                   # AgentState：LangGraph 状态 schema
 │   ├── tool_registry.py         # 工具注册中心（read / write_internal / write_external）
 │   ├── safety.py                # 安全网关：check_permission() 权限判定
 │   ├── logger.py                # 统一日志 + 敏感信息脱敏 + 近期日志缓冲
