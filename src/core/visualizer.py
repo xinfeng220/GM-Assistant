@@ -20,15 +20,19 @@ def _layers(nodes: list[dict], edges: list[tuple[str, str]]) -> dict[str, int]:
 
 
 def render_graph_svg(nodes: list[dict], edges: list[tuple[str, str]],
-                     executed: dict[str, dict] | None = None) -> str:
+                     executed: dict[str, dict] | None = None, *,
+                     box_w: int = 150, box_h: int = 48, gap_x: int = 60,
+                     gap_y: int = 40, margin: int = 20,
+                     font_size: int = 13, font_size_sub: int = 11) -> str:
     """渲染 DAG 为 SVG 字符串。
 
     nodes: [{"name": ..., "label": ...}]；edges: [(src, dst), ...]
     executed: {node_name: {"duration_ms": float, "status": str}}
+    布局与字号可参数化（box_w/box_h/gap_x/gap_y/margin/font_size/font_size_sub），
+    默认与历史一致；窄面板用紧凑参数。
     """
     executed = executed or {}
     layers = _layers(nodes, edges)
-    box_w, box_h, gap_x, gap_y, margin = 150, 48, 60, 40, 20
     by_layer: dict[int, list[str]] = {}
     for node in nodes:
         by_layer.setdefault(layers[node["name"]], []).append(node["name"])
@@ -66,13 +70,14 @@ def render_graph_svg(nodes: list[dict], edges: list[tuple[str, str]],
             f'stroke="{stroke}" stroke-width="1.5"/>'
         )
         parts.append(
-            f'<text x="{x + box_w // 2}" y="{y + 22}" text-anchor="middle" font-size="13" '
-            f'font-weight="bold">{node["label"]}</text>'
+            f'<text x="{x + box_w // 2}" y="{y + round(box_h * 0.45)}" text-anchor="middle" '
+            f'font-size="{font_size}" font-weight="bold">{node["label"]}</text>'
         )
         if ex:
             parts.append(
-                f'<text x="{x + box_w // 2}" y="{y + 40}" text-anchor="middle" font-size="11" '
-                f'fill="#1e7e34">{ex.get("duration_ms", 0):.1f} ms · {ex.get("status", "")}</text>'
+                f'<text x="{x + box_w // 2}" y="{y + round(box_h * 0.85)}" text-anchor="middle" '
+                f'font-size="{font_size_sub}" fill="#1e7e34">'
+                f'{ex.get("duration_ms", 0):.1f} ms · {ex.get("status", "")}</text>'
             )
     parts.append("</svg>")
     return "".join(parts)
