@@ -1,0 +1,8 @@
+# Web 界面（Streamlit 多页面）
+streamlit>=1.36
+# LLM 统一调用接口（当前 mock 模式无需 API Key，接口已预留）
+litellm>=1.40
+# .env 配置读取
+python-dotenv>=1.0
+# LangGraph 状态机框架
+langgraph>=0.3
