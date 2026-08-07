@@ -2,6 +2,8 @@
 .env
 
 # 日志与 Python 缓存
+docs/
+devlogs/
 logs/
 __pycache__/
 *.pyc
