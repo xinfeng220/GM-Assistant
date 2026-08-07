@@ -11,6 +11,7 @@ import streamlit as st
 from src.core.logger import logger
 from src.core.config_manager import config
 from src.core.tracing import tracer
+from src.core.ui import viz_layout, render_visualization_panel
 
 # 分组展示顺序与图标
 _URGENCY_ORDER = ["紧急", "重要", "普通", "可忽略"]
@@ -27,23 +28,28 @@ def render() -> None:
     st.title("📧 智能邮件处理")
     st.caption("Phase 1：邮件拉取 + 自动分类（Mock / IMAP）· **不含草拟与发送**")
 
-    _show_mode_banner()
+    _, left, right = viz_layout()
+    with left:
+        _show_mode_banner()
 
-    # 顶部：刷新按钮 + 状态
-    col_btn, col_status = st.columns([1, 3])
-    with col_btn:
-        if st.button("🔄 刷新邮件", type="primary", use_container_width=True):
-            _refresh()
-    with col_status:
-        st.caption(_refresh_status())
+        # 顶部：刷新按钮 + 状态
+        col_btn, col_status = st.columns([1, 3])
+        with col_btn:
+            if st.button("🔄 刷新邮件", type="primary", use_container_width=True):
+                _refresh()
+        with col_status:
+            st.caption(_refresh_status())
 
-    emails = st.session_state.get(_KEY_EMAILS)
-    if not emails:
-        st.info("点击「🔄 刷新邮件」开始。未配置邮箱时将使用 Mock 样例邮件演示。")
-        return
+        emails = st.session_state.get(_KEY_EMAILS)
+        if not emails:
+            st.info("点击「🔄 刷新邮件」开始。未配置邮箱时将使用 Mock 样例邮件演示。")
+        else:
+            st.divider()
+            _render_groups(emails)
 
-    st.divider()
-    _render_groups(emails)
+    if right is not None:
+        with right:
+            render_visualization_panel()
 
 
 def _show_mode_banner() -> None:

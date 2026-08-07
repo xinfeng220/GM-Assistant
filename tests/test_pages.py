@@ -29,3 +29,18 @@ def test_visualization_panel_present_on_overview(mock_env):
     assert not at.exception
     assert len(at.toggle) == 1
     assert at.toggle[0].value is True
+
+
+def test_visualization_panel_present_on_email(mock_env):
+    at = AppTest.from_file(_PROJECT_ROOT / "pages/02_email.py", default_timeout=30)
+    at.run()
+    assert not at.exception
+    assert len(at.toggle) == 1
+
+
+def test_visualization_panel_collapsible_on_email(mock_env):
+    at = AppTest.from_file(_PROJECT_ROOT / "pages/02_email.py", default_timeout=30)
+    at.run()
+    at.toggle[0].set_value(False).run()
+    assert not at.exception
+    assert at.toggle[0].value is False
