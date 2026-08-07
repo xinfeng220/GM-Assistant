@@ -39,12 +39,12 @@ GM-Assistant/
 │   └── prompts/
 │       └── email/                   # LLM 提示词模板（classification / summary / draft）
 ├── pages/
-│   ├── 01_可视化.py                  # 图执行可视化：DAG + 最近执行轨迹 + token/工具审计 + 日志
-│   └── 02_邮件处理.py                # 邮件处理页：极简转发到 src.capabilities.email.ui_page
+│   ├── 01_visualization.py            # 图执行可视化：DAG + 最近执行轨迹 + token/工具审计 + 日志
+│   └── 02_email.py                    # 邮件处理页：极简转发到 src.capabilities.email.ui_page
 ├── main.py                          # 总览页：技能模块 / 工具计数 / 安全模式 / 最近执行 / 日志
 ├── .env.example                     # 环境变量示例（复制为 .env 使用；密钥仅从此读取）
 ├── requirements.txt
-└── 需求文档.md
+└── requirements.md
 ```
 
 ## 2. 平台骨架
@@ -216,4 +216,4 @@ ENABLE_WRITE_EXTERNAL=false
 
 Phase 2 起将使用到安全网关已预留的 `write_internal`（草稿）与 `write_external`（发送）权限位。
 
-详细需求与安全网关规格见 [需求文档.md](需求文档.md)。
+详细需求与安全网关规格见 [requirements.md](requirements.md)。

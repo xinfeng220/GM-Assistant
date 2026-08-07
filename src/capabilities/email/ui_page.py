@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""邮件技能的 Streamlit 页面（由 pages/01_邮件处理.py 转发调用）。
+"""邮件技能的 Streamlit 页面（由 pages/02_email.py 转发调用）。
 
 功能：点「刷新邮件」触发拉取 + 分类，按紧急度分组展示，可展开看详情。
 结果保存在 st.session_state，避免重复拉取。
