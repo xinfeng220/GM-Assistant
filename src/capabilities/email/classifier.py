@@ -9,9 +9,9 @@
 import json
 import re
 
-from agent_core.logger import logger
-from config import config
-from skills.email.prompts.classification import SYSTEM_PROMPT
+from src.core.logger import logger
+from src.core.config_manager import config
+from src.capabilities.email.prompts.classification import SYSTEM_PROMPT
 
 URGENCY_LEVELS = ("紧急", "重要", "普通", "可忽略")
 ACTIONS = ("需要回复", "仅需阅读", "可转交", "可归档")

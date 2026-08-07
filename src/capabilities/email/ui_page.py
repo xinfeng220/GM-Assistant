@@ -8,8 +8,8 @@ from datetime import datetime
 
 import streamlit as st
 
-from agent_core.logger import logger
-from config import config
+from src.core.logger import logger
+from src.core.config_manager import config
 
 # 分组展示顺序与图标
 _URGENCY_ORDER = ["紧急", "重要", "普通", "可忽略"]
@@ -58,7 +58,7 @@ def _show_mode_banner() -> None:
 
 def _refresh() -> None:
     """触发 Agent 超级图执行「刷新邮件」路径。"""
-    from agent_core.graph import agent
+    from src.core.graph import agent
 
     with st.spinner("正在拉取并分类邮件..."):
         try:

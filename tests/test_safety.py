@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 import pytest
 
-from agent_core.safety import (
+from src.core.safety import (
     PermissionDeniedError,
     NeedsConfirmError,
     safe_call,
 )
-from agent_core.tool_registry import (
+from src.core.tool_registry import (
     TOOL_READ,
     TOOL_WRITE_EXTERNAL,
     TOOL_WRITE_INTERNAL,

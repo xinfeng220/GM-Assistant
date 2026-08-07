@@ -8,8 +8,8 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-# 项目根目录（config.py 所在目录）
-BASE_DIR = Path(__file__).resolve().parent
+# 项目根目录（config_manager.py: src/core/ → 根）
+BASE_DIR = Path(__file__).resolve().parents[2]
 
 # 加载 .env 文件（若存在）
 load_dotenv(BASE_DIR / ".env")

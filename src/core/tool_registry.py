@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """统一工具注册中心。
 
-集中注册/查询各技能通过 skill_manifest.py 声明的工具，并区分工具读写类型，
+集中注册/查询各技能通过 manifest.py 声明的工具，并区分工具读写类型，
 供安全网关（safety.py）做权限判定。
 """
 from dataclasses import dataclass, field

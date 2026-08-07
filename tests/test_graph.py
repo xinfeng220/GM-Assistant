@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from langgraph.graph import END
 
-from agent_core.graph import agent
+from src.core.graph import agent
 
 
 def test_agent_refresh_email_flow(mock_env):
@@ -25,8 +25,8 @@ def test_agent_unknown_route_ends(mock_env):
 
 def test_route_path_degrades_unbuilt_skill(mock_env, monkeypatch):
     """指向未装配子图技能的 route 应退化为 END，而不是报错。"""
-    from agent_core.graph import route_path
-    from agent_core.orchestrator import orchestrator
+    from src.core.graph import route_path
+    from src.core.orchestrator import orchestrator
 
     monkeypatch.setattr(
         orchestrator,
@@ -41,7 +41,7 @@ def test_route_path_degrades_unbuilt_skill(mock_env, monkeypatch):
 
 def test_agent_invoke_degrades_unbuilt_skill(mock_env, monkeypatch):
     """整图 invoke 时，指向未装配子图技能的 route 不崩溃，直接结束。"""
-    from agent_core.orchestrator import orchestrator
+    from src.core.orchestrator import orchestrator
 
     monkeypatch.setattr(
         orchestrator,

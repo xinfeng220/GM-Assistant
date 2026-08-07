@@ -6,8 +6,8 @@
 - write_internal：需用户在 UI 中确认
 - write_external：默认禁用，需配置文件显式开启（对应安全红线）
 """
-from config import config
-from agent_core.tool_registry import registry, TOOL_READ, TOOL_WRITE_EXTERNAL, TOOL_WRITE_INTERNAL
+from src.core.config_manager import config
+from src.core.tool_registry import registry, TOOL_READ, TOOL_WRITE_EXTERNAL, TOOL_WRITE_INTERNAL
 
 # 权限判定结果
 PERMIT_ALLOWED = "allowed"

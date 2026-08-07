@@ -21,7 +21,7 @@ except Exception:
     pass
 
 # 项目根目录下 logs/ 作为默认日志目录
-_LOG_DIR = Path(__file__).resolve().parent.parent / "logs"
+_LOG_DIR = Path(__file__).resolve().parents[2] / "logs"
 _DEFAULT_LOG_FILE = _LOG_DIR / "agent.log"
 
 # 邮箱地址

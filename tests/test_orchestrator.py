@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from agent_core.orchestrator import orchestrator
+from src.core.orchestrator import orchestrator
 
 
 def test_scan_builds_email_subgraph(mock_env):

@@ -2,7 +2,7 @@
 """pytest 公共 fixture：强制 Mock 模式，杜绝测试触发真实 IMAP/LLM。"""
 import pytest
 
-from config import config
+from src.core.config_manager import config
 
 
 @pytest.fixture

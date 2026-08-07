@@ -12,8 +12,8 @@ import imaplib
 import re
 from email.header import decode_header
 
-from agent_core.logger import logger
-from config import config
+from src.core.logger import logger
+from src.core.config_manager import config
 
 # ---------------- Mock 样例邮件（覆盖四档紧急度，便于演示） ----------------
 _MOCK_EMAILS: list[dict] = [

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from agent_core.state import AgentState
+from src.core.state import AgentState
 
 
 def test_agent_state_partial_fields():

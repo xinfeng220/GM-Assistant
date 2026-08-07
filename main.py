@@ -5,12 +5,12 @@
 """
 import streamlit as st
 
-from agent_core.graph import agent
-from agent_core.logger import logger
-from agent_core.orchestrator import orchestrator
-from agent_core.safety import gateway
-from agent_core.tool_registry import registry
-from config import config
+from src.core.graph import agent
+from src.core.logger import logger
+from src.core.orchestrator import orchestrator
+from src.core.safety import gateway
+from src.core.tool_registry import registry
+from src.core.config_manager import config
 
 st.set_page_config(page_title="GM-Assistant Agent 平台", page_icon="🤖", layout="wide")
 
@@ -36,7 +36,7 @@ c4.metric("会话消息", _msg_count)
 # ---------- 技能列表 ----------
 st.subheader("🧩 已加载技能")
 if not skills:
-    st.warning("未发现任何技能。请确认 `skills/` 目录下存在 skill_manifest.py。")
+    st.warning("未发现任何技能。请确认 `src/capabilities/` 目录下存在 manifest.py。")
 else:
     for skill in skills:
         with st.container(border=True):

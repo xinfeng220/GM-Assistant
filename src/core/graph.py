@@ -9,9 +9,9 @@ from functools import partial
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, StateGraph
 
-from agent_core.logger import logger
-from agent_core.orchestrator import orchestrator
-from agent_core.state import AgentState
+from src.core.logger import logger
+from src.core.orchestrator import orchestrator
+from src.core.state import AgentState
 
 
 def route_node(state: AgentState) -> dict:

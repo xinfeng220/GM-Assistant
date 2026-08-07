@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """技能编排器。
 
-启动时扫描 skills/ 目录下所有子目录，寻找 skill_manifest.py 并动态加载：
+启动时扫描 src/capabilities/ 目录下所有子目录，寻找 manifest.py 并动态加载：
 - 收集技能元信息
 - 注册技能声明的工具到统一工具注册中心
 - 单个技能加载失败不影响其他技能
@@ -11,11 +11,11 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from agent_core.logger import logger
-from agent_core.tool_registry import registry
+from src.core.logger import logger
+from src.core.tool_registry import registry
 
-# skills 目录：项目根目录/skills
-_SKILLS_DIR = Path(__file__).resolve().parent.parent / "skills"
+# 能力目录：项目根/src/capabilities
+_SKILLS_DIR = Path(__file__).resolve().parents[1] / "capabilities"
 
 
 @dataclass
@@ -43,17 +43,17 @@ class Orchestrator:
         self._scanned = False
 
     def scan(self, skills_dir: str | Path | None = None) -> list[SkillInfo]:
-        """扫描 skills/ 下每个含 skill_manifest.py 的子目录并加载。"""
+        """扫描 src/capabilities/ 下每个含 manifest.py 的子目录并加载。"""
         skills_dir = Path(skills_dir) if skills_dir else _SKILLS_DIR
         self._skills = []
         registry.clear()  # 重新扫描时重置注册中心，避免残留
 
         if not skills_dir.is_dir():
-            logger.warning("orchestrator", f"skills 目录不存在: {skills_dir}")
+            logger.warning("orchestrator", f"capabilities 目录不存在: {skills_dir}")
             self._scanned = True
             return self._skills
 
-        manifests = sorted(skills_dir.glob("*/skill_manifest.py"))
+        manifests = sorted(skills_dir.glob("*/manifest.py"))
         for manifest_path in manifests:
             self._load_skill(manifest_path)
 

@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 """email 技能子图：fetch → classify。
 
-由 skill_manifest.build_subgraph() 返回，orchestrator 装配到 Agent 超级图。
+由 manifest.build_subgraph() 返回，orchestrator 装配到 Agent 超级图。
 节点统一经 safety.safe_call 调用工具，异常进 state["errors"]，不崩图。
 """
 from langgraph.graph import END, StateGraph
 
-from agent_core.logger import logger
-from agent_core.safety import safe_call
-from agent_core.state import AgentState
+from src.core.logger import logger
+from src.core.safety import safe_call
+from src.core.state import AgentState
 
 
 def fetch_node(state: AgentState) -> dict:
