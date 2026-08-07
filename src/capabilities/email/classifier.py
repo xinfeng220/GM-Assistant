@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """邮件分类模块。
 
-- LLM 模式（config.llm_configured 为 True）：经 litellm 调用真实模型，输出结构化 JSON
+- LLM 模式（config.llm_configured 为 True）：经 src.core.llm 调用真实模型，输出结构化 JSON
 - Mock 模式（默认）：关键词规则分类，无需任何 API Key
 
 每次分类仅传入「主题 + 正文前 500 字」，避免 token 浪费。
@@ -11,6 +11,7 @@ import re
 
 from src.core.logger import logger
 from src.core.config_manager import config
+from src.core.llm import completion, invoke_with_fallback
 from src.core.schemas import Classification, Email, EmailClassified
 
 URGENCY_LEVELS = ("紧急", "重要", "普通", "可忽略")
@@ -80,31 +81,15 @@ def _mock_classify(text: str) -> Classification:
     return Classification(urgency=urgency, action=action, category_tag=tag, reason=reason)
 
 
-# ---------------- LLM 路径（litellm） ----------------
-def _llm_completion_text(text: str) -> str:
-    """经 litellm 调用真实模型，返回输出文本；失败抛异常，由上层退回规则分类。"""
-    import litellm
-
-    kwargs: dict = {
-        "model": config.LLM_MODEL,
-        "messages": [
-            {"role": "system", "content": config.get_prompt("email.classification")},
+# ---------------- LLM 路径（src.core.llm） ----------------
+def _llm_classify(text: str, system_prompt: str) -> Classification:
+    content = completion(
+        [
+            {"role": "system", "content": system_prompt},
             {"role": "user", "content": text},
         ],
-        "temperature": 0.0,
-    }
-    if config.LLM_BASE_URL:
-        kwargs["api_base"] = config.LLM_BASE_URL
-    if config.LLM_API_KEY:
-        kwargs["api_key"] = config.LLM_API_KEY
-
-    response = litellm.completion(**kwargs)
-    return response.choices[0].message.content
-
-
-def _llm_classify(text: str) -> Classification:
-    """调用 LLM 并解析为 Classification；失败抛异常，由上层退回规则分类。"""
-    content = _llm_completion_text(text)  # Task 5 换成 src.core.llm.completion
+        temperature=0.0,
+    )
     raw = _parse_json(content)
     return Classification(
         urgency=raw.get("urgency", "普通"),
@@ -112,6 +97,14 @@ def _llm_classify(text: str) -> Classification:
         category_tag=str(raw.get("category_tag", "") or "其他"),
         reason=str(raw.get("reason", "") or ""),
     )
+
+
+def _safe_classify(text: str, system_prompt: str) -> Classification:
+    """LLM 优先；任何失败退回规则分类。"""
+    def _fallback(exc: Exception) -> Classification:
+        logger.warning("email.classifier", f"LLM 分类失败，退回规则分类: {exc}")
+        return _mock_classify(text)
+    return invoke_with_fallback(lambda: _llm_classify(text, system_prompt), _fallback, label="classify")
 
 
 def _parse_json(content: str) -> dict:
@@ -131,15 +124,9 @@ class EmailClassifier:
     def classify_one(self, email: Email) -> Classification:
         """对单封邮件分类，返回 Classification。"""
         text = f"主题：{email.subject}\n正文：{email.body_preview}"[:_CLASSIFY_TEXT_LEN]
-
-        if self._config.llm_configured:
-            try:
-                return _llm_classify(text)
-            except Exception as e:
-                # 真实模型调用失败时退回规则分类，保证页面可用
-                logger.warning("email.classifier", f"LLM 分类失败，退回规则分类: {e}")
-
-        return _mock_classify(text)
+        if not self._config.llm_configured:
+            return _mock_classify(text)
+        return _safe_classify(text, self._config.get_prompt("email.classification"))
 
     def classify_many(self, emails: list[Email]) -> list[EmailClassified]:
         """批量分类，返回 EmailClassified 列表。"""
