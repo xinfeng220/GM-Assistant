@@ -7,9 +7,9 @@ def test_scan_builds_email_subgraph(mock_env):
     email = next(s for s in skills if s.name == "email")
     assert email.status == "active"
     assert email.subgraph is not None
-    assert "refresh_email" in email.routes
+    assert "refresh" in email.routes
 
 
-def test_route_map_maps_refresh_email(mock_env):
+def test_route_map_maps_email_refresh(mock_env):
     orchestrator.scan()
-    assert orchestrator.route_map()["refresh_email"] == "email"
+    assert orchestrator.route_map()["email.refresh"] == "email"

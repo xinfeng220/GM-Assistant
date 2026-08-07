@@ -4,12 +4,12 @@ from langgraph.graph import END
 from src.core.graph import agent
 
 
-def test_agent_refresh_email_flow(mock_env):
+def test_agent_email_refresh_flow(mock_env):
     result = agent.invoke(
-        {"route": "refresh_email"},
+        {"route": "email.refresh"},
         config={"configurable": {"thread_id": "test-refresh"}},
     )
-    assert result["route"] == "refresh_email"
+    assert result["route"] == "email.refresh"
     assert result["emails"]
     assert len(result["classified"]) == len(result["emails"])
     assert "errors" not in result
@@ -31,11 +31,11 @@ def test_route_path_degrades_unbuilt_skill(mock_env, monkeypatch):
     monkeypatch.setattr(
         orchestrator,
         "route_map",
-        lambda: {"refresh_email": "email", "broken_route": "broken_skill"},
+        lambda: {"email.refresh": "email", "broken.refresh": "broken_skill"},
     )
     valid = frozenset({END, "email"})
-    assert route_path({"route": "broken_route"}, valid_targets=valid) == END
-    assert route_path({"route": "refresh_email"}, valid_targets=valid) == "email"
+    assert route_path({"route": "broken.refresh"}, valid_targets=valid) == END
+    assert route_path({"route": "email.refresh"}, valid_targets=valid) == "email"
     assert route_path({"route": "nonsense"}, valid_targets=valid) == END
 
 
@@ -46,11 +46,11 @@ def test_agent_invoke_degrades_unbuilt_skill(mock_env, monkeypatch):
     monkeypatch.setattr(
         orchestrator,
         "route_map",
-        lambda: {"refresh_email": "email", "broken_route": "broken_skill"},
+        lambda: {"email.refresh": "email", "broken.refresh": "broken_skill"},
     )
     result = agent.invoke(
-        {"route": "broken_route"},
+        {"route": "broken.refresh"},
         config={"configurable": {"thread_id": "test-broken"}},
     )
-    assert result["route"] == "broken_route"
+    assert result["route"] == "broken.refresh"
     assert "classified" not in result

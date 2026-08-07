@@ -7,8 +7,8 @@
 from src.capabilities.email.tools import get_tools
 from src.core.config_manager import config
 
-# 本技能子图可处理的 route 名（orchestrator 据此构建超级图路由表）
-ROUTES = ["refresh_email"]
+# 本能力子图可处理的裸 route 名；orchestrator 会以前缀生成 "email.refresh"
+ROUTES = ["refresh"]
 
 
 def build_subgraph():

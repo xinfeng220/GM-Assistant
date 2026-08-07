@@ -63,7 +63,7 @@ def _refresh() -> None:
     with st.spinner("正在拉取并分类邮件..."):
         try:
             result = agent.invoke(
-                {"route": "refresh_email"},
+                {"route": "email.refresh"},
                 config={"configurable": {"thread_id": "ui"}},
             )
             classified = result.get("classified") or []

@@ -125,9 +125,9 @@ class Orchestrator:
         return self._skills
 
     def route_map(self) -> dict[str, str]:
-        """返回 {route 名: 技能节点名} 映射，供超级图路由表使用。"""
+        """{命名空间 route: 能力节点名}，如 {"email.refresh": "email"}。技能名唯一 → 天然不撞名。"""
         return {
-            route: skill.name
+            f"{skill.name}.{route}": skill.name
             for skill in self._skills
             for route in skill.routes
         }

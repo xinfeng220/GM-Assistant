@@ -6,13 +6,16 @@ LangGraph 的 StateGraph 以 AgentState 作为节点间传递的状态 schema。
 """
 from typing import Any, TypedDict
 
+from src.core.schemas import Email, EmailClassified
+
 
 class AgentState(TypedDict, total=False):
-    route: str                  # router 选择的路径（如 refresh_email）
+    route: str                  # 命名空间 route，如 "email.refresh"
     request: dict[str, Any]     # 请求参数
-    emails: list[dict]          # 拉取结果
-    classified: list[dict]      # 分类结果
-    messages: list[dict]        # 会话历史（替代原 memory.py）
+    capability: str             # 本次执行的能力名（如 "email"）
+    emails: list[Email]         # 拉取结果（类型化，Task 2）
+    classified: list[EmailClassified]
+    messages: list[dict]        # 会话历史（Phase 2 启用）
     errors: list[str]           # 错误收集
 
     # Phase 2 追加：summaries / drafts / confirm_queue / sent_result
