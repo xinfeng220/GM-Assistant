@@ -1,0 +1,37 @@
+# -*- coding: utf-8 -*-
+from src.core.tracing import TraceRecorder
+
+
+def _fresh():
+    r = TraceRecorder()
+    r.begin_run("email.refresh")
+    return r
+
+
+def test_record_and_last_run():
+    r = _fresh()
+    r.record_node("fetch", "ok", 12.0)
+    r.record_tool("fetch_emails", "ok")
+    r.record_tokens(150)
+    r.end_run()
+    run = r.get_last_run()
+    assert run["route"] == "email.refresh"
+    assert len(run["nodes"]) == 1
+    assert run["nodes"][0]["node"] == "fetch"
+    assert run["tokens"] == 150
+
+
+def test_no_current_run_is_noop():
+    r = TraceRecorder()
+    r.record_tokens(10)  # 未 begin_run，不应崩
+    r.record_node("n", "ok", 1.0)
+    assert r.get_last_run() is None
+
+
+def test_recent_runs_bounded():
+    r = TraceRecorder(recent_maxlen=2)
+    for i in range(3):
+        r.begin_run(f"r{i}")
+        r.end_run()
+    assert len(r.recent_runs(10)) == 2
+    assert r.recent_runs(1)[0]["route"] == "r2"
