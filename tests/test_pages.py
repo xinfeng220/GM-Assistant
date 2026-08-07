@@ -21,3 +21,11 @@ def test_overview_page_renders(mock_env):
     at.run()
     assert not at.exception
     assert len(at.metric) >= 3    # 技能模块 / 工具注册 / 安全模式
+
+
+def test_visualization_panel_present_on_overview(mock_env):
+    at = AppTest.from_file(_PROJECT_ROOT / "main.py", default_timeout=30)
+    at.run()
+    assert not at.exception
+    assert len(at.toggle) == 1
+    assert at.toggle[0].value is True
