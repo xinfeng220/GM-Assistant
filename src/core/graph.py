@@ -6,9 +6,9 @@ UI 统一通过 agent.invoke({"route": ...}) 驱动，不再直接调用工具�
 """
 from functools import partial
 
-from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, StateGraph
 
+from src.core.checkpointer import build_checkpointer
 from src.core.logger import logger
 from src.core.orchestrator import orchestrator
 from src.core.state import AgentState
@@ -53,7 +53,7 @@ def build_agent_graph():
         path_map,
     )
     g.set_entry_point("route")
-    return g.compile(checkpointer=MemorySaver())
+    return g.compile(checkpointer=build_checkpointer())
 
 
 # 全局单例（进程启动时扫描并装配）
