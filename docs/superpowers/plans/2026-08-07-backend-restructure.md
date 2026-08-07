@@ -1226,7 +1226,7 @@ def test_traced_decorator_records_node():
     r = TraceRecorder()
     r.begin_run("email.refresh")
 
-    @traced(tracer=r)
+    @traced(target=r)
     def fetch_node(state):
         return {"emails": []}
 
@@ -1246,17 +1246,19 @@ Expected: FAIL（`traced` 不存在）。
 
 - [ ] **Step 3: 改 `tracing.py` 加 `@traced`**
 
+放在 `tracer = TraceRecorder()` 之后（`traced` 定义于 `tracer` 之后，默认参数直接引用模块全局 `tracer`，无定义期问题、无 `globals()` 取巧）：
+
 ```python
 from functools import wraps
 from time import perf_counter
 
 
-def traced(*, tracer: "TraceRecorder | None" = None):
-    """包裹图节点：计时并记录执行轨迹。默认用全局 tracer。"""
+def traced(*, target: "TraceRecorder | None" = None):
+    """包裹图节点：计时并记录执行轨迹。缺省记录到全局 tracer。"""
     def decorator(fn):
         @wraps(fn)
         def wrapper(state):
-            rec = tracer if tracer is not None else globals().get("tracer")
+            rec = target if target is not None else tracer
             start = perf_counter()
             result = fn(state)
             duration_ms = (perf_counter() - start) * 1000
@@ -1267,7 +1269,6 @@ def traced(*, tracer: "TraceRecorder | None" = None):
         return wrapper
     return decorator
 ```
-（`traced` 在 `tracer = TraceRecorder()` 之后定义或延迟取全局，避免定义期引用问题。）
 
 - [ ] **Step 4: 改 `safety.py` 的 `safe_call` 记录工具审计**
 
