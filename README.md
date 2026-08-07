@@ -25,6 +25,7 @@ GM-Assistant/
 │   │   ├── checkpointer.py          # 会话持久化抽象（build_checkpointer，当前 MemorySaver）
 │   │   ├── tracing.py               # 执行观测：tracer + @traced（轨迹 / 工具审计 / token）
 │   │   ├── visualizer.py            # 图结构渲染：render_graph_svg()
+│   │   ├── ui.py                    # 平台 UI 组件：viz_layout() + render_visualization_panel()（右侧可视化面板）
 │   │   └── logger.py                # 统一日志 + 敏感信息脱敏 + 近期日志缓冲
 │   └── capabilities/
 │       └── email/                   # 能力模块：智能邮件处理
@@ -39,7 +40,6 @@ GM-Assistant/
 │   └── prompts/
 │       └── email/                   # LLM 提示词模板（classification / summary / draft）
 ├── pages/
-│   ├── 01_visualization.py            # 图执行可视化：DAG + 最近执行轨迹 + token/工具审计 + 日志
 │   └── 02_email.py                    # 邮件处理页：极简转发到 src.capabilities.email.ui_page
 ├── main.py                          # 总览页：技能模块 / 工具计数 / 安全模式 / 最近执行 / 日志
 ├── .env.example                     # 环境变量示例（复制为 .env 使用；密钥仅从此读取）
@@ -63,6 +63,7 @@ GM-Assistant/
 | `checkpointer` | 会话持久化抽象（当前 MemorySaver，可替换为 Postgres，接口不变） |
 | `tracing` | 执行观测：节点轨迹、工具调用审计、token 用量（`tracer` + `@traced` 装饰器） |
 | `visualizer` | 图结构渲染（`render_graph_svg`，已执行节点高亮） |
+| `ui` | 平台 UI 组件：`viz_layout()`（toggle + 右列布局）与 `render_visualization_panel()`（图结构/指标/轨迹面板） |
 | `logger` | 统一日志（自动脱敏，正文不落盘） |
 
 编排层基于 **LangGraph**：Agent 超级图（Router 入口 + 能力子图），工具调用统一经安全网关 `safe_call` 包裹；能力=子图，由 orchestrator 扫描 `manifest.py` 装配，route 以「能力名.action」命名空间分发（如 `email.refresh`）。
@@ -157,7 +158,7 @@ cd C:\intern\GM-Assistant
 D:\conda_envs\GM-Assistant\python.exe -m streamlit run main.py
 ```
 
-访问 <http://localhost:8501>。总览页展示能力模块、工具计数、安全模式、最近执行与最近日志；「邮件处理」页点击「刷新邮件」即可看到拉取 + 分类结果；「可视化」页展示图结构 DAG（已执行节点高亮）、最近一次执行轨迹、token 用量与工具调用审计。
+访问 <http://localhost:8501>。总览页展示能力模块、工具计数、安全模式、最近执行与最近日志；「邮件处理」页点击「刷新邮件」即可看到拉取 + 分类结果。**总览页与邮件页右侧均有可折叠的「显示可视化」面板**，展示图结构 DAG（已执行节点高亮）、最近执行指标、节点轨迹与工具调用审计——与页面内容同屏，随时可折叠。
 
 > Windows 提示：`conda run` 输出含 emoji 时会触发 GBK 编码崩溃（conda 自身 bug），请直接调用环境内的 `python.exe`。
 
