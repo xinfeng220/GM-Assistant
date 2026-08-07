@@ -12,7 +12,6 @@ import re
 from src.core.logger import logger
 from src.core.config_manager import config
 from src.core.schemas import Classification, Email, EmailClassified
-from src.capabilities.email.prompts.classification import SYSTEM_PROMPT
 
 URGENCY_LEVELS = ("紧急", "重要", "普通", "可忽略")
 ACTIONS = ("需要回复", "仅需阅读", "可转交", "可归档")
@@ -89,7 +88,7 @@ def _llm_completion_text(text: str) -> str:
     kwargs: dict = {
         "model": config.LLM_MODEL,
         "messages": [
-            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "system", "content": config.get_prompt("email.classification")},
             {"role": "user", "content": text},
         ],
         "temperature": 0.0,

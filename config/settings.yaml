@@ -1,0 +1,14 @@
+# GM-Assistant 运行参数（非敏感）。密钥只在 .env，绝不入此文件。
+llm:
+  mode: mock                 # mock / real
+  model: deepseek/deepseek-chat
+  base_url: ""
+  temperature: 0.0
+email:
+  fetch_limit: 20
+  body_preview_len: 300
+safety:
+  enable_write_external: false
+tracing:
+  enabled: true
+  recent_maxlen: 200

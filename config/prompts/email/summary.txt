@@ -1,0 +1,1 @@
+# Phase 2 预留：邮件摘要 prompt
