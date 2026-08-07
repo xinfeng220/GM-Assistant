@@ -71,6 +71,10 @@ class Orchestrator:
         try:
             module = self._import_module(manifest_path, f"skill_{skill_name}")
 
+            problems = self._validate_manifest(module, skill_name)
+            if problems:
+                raise ValueError("manifest 契约不合法: " + "；".join(problems))
+
             meta = getattr(module, "SKILL_META", {})
             info.title = meta.get("title", skill_name)
             info.description = meta.get("description", "")
@@ -106,6 +110,34 @@ class Orchestrator:
             logger.error("orchestrator", f"加载技能 [{skill_name}] 失败: {e}")
 
         self._skills.append(info)
+
+    @staticmethod
+    def _validate_manifest(module, skill_name: str) -> list[str]:
+        """返回 manifest 契约违规列表（空 = 合法）。"""
+        problems: list[str] = []
+        meta = getattr(module, "SKILL_META", {})
+        if not isinstance(meta, dict) or not meta.get("name"):
+            problems.append("SKILL_META.name 缺失或非法")
+
+        get_tools = getattr(module, "get_tools", None)
+        if callable(get_tools):
+            try:
+                defs = list(get_tools())
+            except Exception as e:
+                problems.append(f"get_tools() 抛错: {e}")
+                defs = []
+            for d in defs:
+                if not hasattr(d, "name") or not hasattr(d, "tool_type"):
+                    problems.append("get_tools() 返回了非 ToolDefinition 元素")
+
+        routes = getattr(module, "ROUTES", [])
+        if routes:
+            if not all(isinstance(r, str) for r in routes):
+                problems.append("ROUTES 必须是 str 列表")
+            if not callable(getattr(module, "build_subgraph", None)):
+                problems.append("ROUTES 非空但缺 build_subgraph()")
+
+        return problems
 
     @staticmethod
     def _import_module(path: Path, module_name: str):

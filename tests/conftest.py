@@ -14,3 +14,21 @@ def mock_env(monkeypatch):
     monkeypatch.setattr(config, "LLM_MODE", "mock")
     monkeypatch.setattr(config, "LLM_API_KEY", "")
     return config
+
+
+@pytest.fixture(autouse=True)
+def _isolate_registry():
+    """快照并恢复全局工具注册中心。
+
+    Orchestrator.scan() 会对全局 registry 执行 clear()；测试若用新
+    Orchestrator 实例扫描临时目录，会把已注册的 email 工具清掉，导致后续
+    test_pages 等测试在运行期经 safe_call 查不到工具。此 fixture 在每个测试
+    前后快照/恢复 registry，隔离这种跨测试污染。
+    """
+    from src.core.tool_registry import registry
+
+    snapshot = dict(registry.get_all())
+    yield
+    registry.clear()
+    for definition in snapshot.values():
+        registry.register_tool(definition)
