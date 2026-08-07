@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """邮件拉取模块。
 
-通过 IMAP 拉取最近未读邮件，返回结构化字典列表；
+通过 IMAP 拉取最近未读邮件，返回结构化 Email 列表；
 未配置真实邮箱（config.imap_configured 为 False）时自动使用 Mock 样例数据，便于无凭据演示。
 
 安全约定：邮件正文不写入日志，只记录数量与元数据；邮件内容仅在内存中处理。
@@ -14,6 +14,7 @@ from email.header import decode_header
 
 from src.core.logger import logger
 from src.core.config_manager import config
+from src.core.schemas import Email
 
 # ---------------- Mock 样例邮件（覆盖四档紧急度，便于演示） ----------------
 _MOCK_EMAILS: list[dict] = [
@@ -103,8 +104,8 @@ class MailFetcher:
         """当前是否为 Mock 模式（未配置真实 IMAP）。"""
         return not self._config.imap_configured
 
-    def fetch_recent(self, limit: int | None = None, unread_only: bool = True) -> list[dict]:
-        """拉取最近未读邮件，返回结构化字典列表；失败时返回空列表。"""
+    def fetch_recent(self, limit: int | None = None, unread_only: bool = True) -> list[Email]:
+        """拉取最近未读邮件，返回结构化 Email 列表；失败时返回空列表。"""
         limit = limit or self._config.EMAIL_FETCH_LIMIT
         if self.is_mock:
             logger.info("email.mail_fetcher", "IMAP 未配置，使用 Mock 样例邮件演示")
@@ -112,8 +113,8 @@ class MailFetcher:
         return self._fetch_imap(limit, unread_only)
 
     # ---------------- Mock 路径 ----------------
-    def _fetch_mock(self, limit: int) -> list[dict]:
-        items = [dict(m) for m in _MOCK_EMAILS][:limit]
+    def _fetch_mock(self, limit: int) -> list[Email]:
+        items = [Email(**m) for m in _MOCK_EMAILS][:limit]
         logger.info("email.mail_fetcher", f"Mock 拉取 {len(items)} 封邮件")
         return items
 
@@ -129,7 +130,7 @@ class MailFetcher:
         conn.login(c.IMAP_EMAIL, c.IMAP_PASSWORD)
         return conn
 
-    def _fetch_imap(self, limit: int, unread_only: bool) -> list[dict]:
+    def _fetch_imap(self, limit: int, unread_only: bool) -> list[Email]:
         conn = None
         try:
             conn = self._connect()
@@ -141,7 +142,7 @@ class MailFetcher:
                 logger.info("email.mail_fetcher", "收件箱中没有符合条件的邮件")
                 return []
             msg_ids = msg_ids[-limit:]  # 只取最近的 limit 封
-            emails: list[dict] = []
+            emails: list[Email] = []
             for num in msg_ids:
                 _, msg_data = conn.fetch(num, "(RFC822)")
                 raw = msg_data[0][1]
@@ -165,18 +166,18 @@ class MailFetcher:
 
     # ---------------- 解析辅助 ----------------
     @classmethod
-    def _to_struct(cls, msg_id, message: email.message.Message) -> dict:
-        """将 email.message.Message 转为结构化字典。"""
+    def _to_struct(cls, msg_id, message: email.message.Message) -> Email:
+        """将 email.message.Message 转为 Email 对象（Pydantic alias 处理 "from" 字段）。"""
         # IMAP search 返回的编号是 bytes（如 b'2860'），需解码为字符串作唯一 id
         if isinstance(msg_id, bytes):
             msg_id = msg_id.decode("utf-8", errors="replace")
-        return {
-            "id": str(msg_id),
-            "subject": cls._decode_mime(message.get("Subject", "")),
-            "from": cls._decode_mime(message.get("From", "")),
-            "received_at": cls._decode_date(message.get("Date", "")),
-            "body_preview": cls._extract_preview(message, config.EMAIL_BODY_PREVIEW_LEN),
-        }
+        return Email(
+            id=str(msg_id),
+            subject=cls._decode_mime(message.get("Subject", "")),
+            from_=cls._decode_mime(message.get("From", "")),
+            received_at=cls._decode_date(message.get("Date", "")),
+            body_preview=cls._extract_preview(message, config.EMAIL_BODY_PREVIEW_LEN),
+        )
 
     @staticmethod
     def _decode_mime(value: str) -> str:
@@ -238,6 +239,9 @@ class MailFetcher:
         return _decode(message.get_payload(decode=True), message.get_content_charset())
 
 
-def fetch_emails(limit: int | None = None, unread_only: bool = True) -> list[dict]:
+def fetch_emails(limit: int | None = None, unread_only: bool = True) -> list[Email]:
     """技能对外工具：拉取最近未读邮件。"""
     return MailFetcher().fetch_recent(limit=limit, unread_only=unread_only)
+
+
+__all__ = ["MailFetcher", "fetch_emails"]

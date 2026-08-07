@@ -85,11 +85,11 @@ def _refresh_status() -> str:
     return f"最近刷新：{st.session_state[_KEY_LAST_REFRESH]} ｜ 共 {st.session_state.get(_KEY_LAST_COUNT, 0)} 封"
 
 
-def _render_groups(emails: list[dict]) -> None:
+def _render_groups(emails: list) -> None:
     """按紧急度分组展示邮件列表。"""
-    groups: dict[str, list[dict]] = {}
+    groups: dict[str, list] = {}
     for item in emails:
-        urgency = (item.get("classification") or {}).get("urgency", "普通")
+        urgency = item.classification.urgency
         groups.setdefault(urgency, []).append(item)
 
     for urgency in _URGENCY_ORDER:
@@ -102,19 +102,19 @@ def _render_groups(emails: list[dict]) -> None:
             _render_email(item)
 
 
-def _render_email(item: dict) -> None:
+def _render_email(item) -> None:
     """渲染单封邮件（可展开）。"""
-    subject = item.get("subject", "（无主题）")
-    sender = item.get("from", "未知发件人")
-    received = item.get("received_at", "")
-    cls = item.get("classification") or {}
+    subject = item.subject or "（无主题）"
+    sender = item.from_ or "未知发件人"
+    received = item.received_at or ""
+    cls = item.classification
 
     with st.expander(f"{subject}　—　{sender}　（{received}）"):
         st.markdown(
-            f"**分类**：`{cls.get('urgency', '?')}` / `{cls.get('action', '?')}`　"
-            f"**标签**：`{cls.get('category_tag', '—')}`"
+            f"**分类**：`{cls.urgency}` / `{cls.action}`　"
+            f"**标签**：`{cls.category_tag}`"
         )
-        st.markdown(f"**理由**：{cls.get('reason', '—')}")
+        st.markdown(f"**理由**：{cls.reason}")
         st.divider()
         st.markdown("**邮件预览**")
-        st.write(item.get("body_preview", "（无正文）"))
+        st.write(item.body_preview or "（无正文）")

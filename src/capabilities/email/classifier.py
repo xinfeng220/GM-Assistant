@@ -11,6 +11,7 @@ import re
 
 from src.core.logger import logger
 from src.core.config_manager import config
+from src.core.schemas import Classification, Email, EmailClassified
 from src.capabilities.email.prompts.classification import SYSTEM_PROMPT
 
 URGENCY_LEVELS = ("紧急", "重要", "普通", "可忽略")
@@ -35,7 +36,7 @@ def _first_hit(keywords: tuple[str, ...], text: str) -> str | None:
     return None
 
 
-def _mock_classify(text: str) -> dict:
+def _mock_classify(text: str) -> Classification:
     """基于关键词的规则分类（无需调用 LLM）。"""
     lower = text.lower()
 
@@ -77,17 +78,12 @@ def _mock_classify(text: str) -> dict:
     else:
         tag = "其他"
 
-    return {
-        "urgency": urgency,
-        "action": action,
-        "category_tag": tag,
-        "reason": reason,
-    }
+    return Classification(urgency=urgency, action=action, category_tag=tag, reason=reason)
 
 
 # ---------------- LLM 路径（litellm） ----------------
-def _llm_classify(text: str) -> dict:
-    """经 litellm 调用真实模型分类；失败抛异常，由上层退回规则分类。"""
+def _llm_completion_text(text: str) -> str:
+    """经 litellm 调用真实模型，返回输出文本；失败抛异常，由上层退回规则分类。"""
     import litellm
 
     kwargs: dict = {
@@ -104,8 +100,19 @@ def _llm_classify(text: str) -> dict:
         kwargs["api_key"] = config.LLM_API_KEY
 
     response = litellm.completion(**kwargs)
-    content = response.choices[0].message.content
-    return _validate_result(_parse_json(content))
+    return response.choices[0].message.content
+
+
+def _llm_classify(text: str) -> Classification:
+    """调用 LLM 并解析为 Classification；失败抛异常，由上层退回规则分类。"""
+    content = _llm_completion_text(text)  # Task 5 换成 src.core.llm.completion
+    raw = _parse_json(content)
+    return Classification(
+        urgency=raw.get("urgency", "普通"),
+        action=raw.get("action", "仅需阅读"),
+        category_tag=str(raw.get("category_tag", "") or "其他"),
+        reason=str(raw.get("reason", "") or ""),
+    )
 
 
 def _parse_json(content: str) -> dict:
@@ -116,51 +123,36 @@ def _parse_json(content: str) -> dict:
     return json.loads(content)
 
 
-def _validate_result(data: dict) -> dict:
-    """校验并归一化分类结果，非法值回退到安全默认。"""
-    urgency = data.get("urgency") if data.get("urgency") in URGENCY_LEVELS else "普通"
-    action = data.get("action") if data.get("action") in ACTIONS else "仅需阅读"
-    return {
-        "urgency": urgency,
-        "action": action,
-        "category_tag": str(data.get("category_tag", "") or "其他"),
-        "reason": str(data.get("reason", "") or ""),
-    }
-
-
 class EmailClassifier:
     """邮件分类器：LLM 优先，未配置或无 Key 时自动退回规则分类。"""
 
     def __init__(self) -> None:
         self._config = config
 
-    def classify_one(self, email_item: dict) -> dict:
-        """对单封邮件分类，返回 {urgency, action, category_tag, reason}。"""
-        subject = email_item.get("subject", "")
-        preview = email_item.get("body_preview", "")
-        text = f"主题：{subject}\n正文：{preview}"[:_CLASSIFY_TEXT_LEN]
+    def classify_one(self, email: Email) -> Classification:
+        """对单封邮件分类，返回 Classification。"""
+        text = f"主题：{email.subject}\n正文：{email.body_preview}"[:_CLASSIFY_TEXT_LEN]
 
         if self._config.llm_configured:
             try:
-                result = _llm_classify(text)
-                logger.info("email.email_classifier", f"LLM 分类完成: {email_item.get('id')}")
-                return result
+                return _llm_classify(text)
             except Exception as e:
                 # 真实模型调用失败时退回规则分类，保证页面可用
-                logger.warning("email.email_classifier", f"LLM 分类失败，退回规则分类: {e}")
+                logger.warning("email.classifier", f"LLM 分类失败，退回规则分类: {e}")
 
         return _mock_classify(text)
 
-    def classify_many(self, emails: list[dict]) -> list[dict]:
-        """批量分类，返回带 classification 字段的新列表。"""
-        results = []
-        for email_item in emails:
-            results.append({**email_item, "classification": self.classify_one(email_item)})
-        logger.info("email.email_classifier", f"批量分类完成，共 {len(results)} 封")
+    def classify_many(self, emails: list[Email]) -> list[EmailClassified]:
+        """批量分类，返回 EmailClassified 列表。"""
+        results = [
+            EmailClassified(**email.model_dump(by_alias=True), classification=self.classify_one(email))
+            for email in emails
+        ]
+        logger.info("email.classifier", f"批量分类完成，共 {len(results)} 封")
         return results
 
 
-def classify_emails(emails: list[dict]) -> list[dict]:
+def classify_emails(emails: list[Email]) -> list[EmailClassified]:
     """技能对外工具：对邮件列表做批量分类。"""
     return EmailClassifier().classify_many(emails)
 
